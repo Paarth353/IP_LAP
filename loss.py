@@ -7,6 +7,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 import math
 import torch.nn.functional as F
+
 def apply_imagenet_normalization(input):
     r"""Normalize using ImageNet mean and std.
 

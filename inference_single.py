@@ -16,7 +16,7 @@ parser.add_argument('--input', '--input_template_video', type=str, default='./te
 parser.add_argument('--audio', type=str, default='./test/template_video/audio2.wav')
 #'./test/template_video/abstract.mp3'
 #'./test/template_video/audio2.wav'
-parser.add_argument('--output_dir', type=str, default='./test_result')
+parser.add_argument('--output_dir', type=str, default='/kaggle/working')
 parser.add_argument('--static', type=bool, help='whether only use  the first frame for inference', default=False)
 parser.add_argument('--landmark_gen_checkpoint_path', type=str, default='./test/checkpoints/landmarkgenerator_checkpoint.pth')
 parser.add_argument('--renderer_checkpoint_path', type=str, default='./test/checkpoints/renderer_checkpoint.pth')
@@ -31,14 +31,14 @@ img_size = 128
 
 mp_face_mesh = mp.solutions.face_mesh
 drawing_spec = mp.solutions.drawing_utils.DrawingSpec(thickness=1, circle_radius=1)
-fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False, device='cuda')
+fa = face_alignment.FaceAlignment(face_alignment.LandmarksType.TWO_D, flip_input=False, device='cuda')
 lip_index = [0, 17]  # the index of the midpoints of the upper lip and lower lip
 landmark_gen_checkpoint_path = args.landmark_gen_checkpoint_path
 renderer_checkpoint_path =args.renderer_checkpoint_path
 output_dir = args.output_dir
-temp_dir = 'tempfile_of_{}'.format(output_dir.split('/')[-1])
-os.makedirs(output_dir, exist_ok=True)
-os.makedirs(temp_dir, exist_ok=True)
+temp_dir = '/kaggle/working'
+# os.makedirs(output_dir, exist_ok=True)
+# os.makedirs(temp_dir, exist_ok=True)
 input_video_path = args.input
 input_audio_path = args.audio
 
@@ -258,6 +258,7 @@ with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, refine_landm
         h, w = full_frame.shape[0], full_frame.shape[1]
         results = face_mesh.process(cv2.cvtColor(full_frame, cv2.COLOR_BGR2RGB))
         if not results.multi_face_landmarks:
+            print(f"Warning: No face detected in frame {frame_idx}.")
             raise NotImplementedError  # not detect face
         face_landmarks = results.multi_face_landmarks[0]
 

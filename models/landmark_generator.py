@@ -62,8 +62,6 @@ class Conv2d(nn.Module):
             out += x
         return self.act(out)
 
-
-
 def weight_init(m):
     if isinstance(m, nn.Linear):
         nn.init.xavier_normal_(m.weight)
@@ -71,7 +69,6 @@ def weight_init(m):
     elif isinstance(m, nn.BatchNorm1d):
         nn.init.constant_(m.weight, 1)
         nn.init.constant_(m.bias, 0)
-
 
 class Fusion_transformer_encoder(nn.Module):
     def __init__(self,T, d_model, nlayers, nhead, dim_feedforward,  # 1024   128
@@ -108,10 +105,10 @@ class Fusion_transformer_encoder(nn.Module):
         output = self.transformer_encoder(input_tokens)
         return output
 
-
 class Landmark_generator(nn.Module):
     def __init__(self,T,d_model,nlayers,nhead,dim_feedforward,dropout=0.1):
         super(Landmark_generator, self).__init__()
+
         self.mel_encoder=nn.Sequential(  #  (B*T,1,hv,wv)
             Conv2d(1, 32, kernel_size=3, stride=1, padding=1),
             Conv2d(32, 32, kernel_size=3, stride=1, padding=1, residual=True),
@@ -161,6 +158,7 @@ class Landmark_generator(nn.Module):
             Conv1d(256, 512, 3, 1,0), #1
             Conv1d(512, 512, 1, 1,0,act='Tanh'), #1
         )
+
         self.pose_encoder=nn.Sequential(   # (B*T,2,74)
             Conv1d(2, 4, 3, 1, 1),
 
@@ -215,6 +213,7 @@ class Landmark_generator(nn.Module):
         mel_embedding=self.mel_encoder(T_mels).squeeze(-1).squeeze(-1)#(B*T,512)
         pose_embedding=self.pose_encoder(T_pose).squeeze(-1)  # (B*T,512)
         ref_embedding = self.ref_encoder(Nl_ref).squeeze(-1)  # (B*Nl,512)
+
         #normalization
         mel_embedding = self.Norm(mel_embedding)  # (B*T,512)
         pose_embedding =self.Norm(pose_embedding)   # (B*T,512)

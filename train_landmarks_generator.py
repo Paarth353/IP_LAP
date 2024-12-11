@@ -14,6 +14,7 @@ parser.add_argument('--pre_audio_root',default='...../Dataset/lrs2_preprocessed_
 parser.add_argument('--landmarks_root',default='...../Dataset/lrs2_landmarks',
                     help='root path for preprocessed  landmarks')
 args=parser.parse_args()
+
 #network parameters
 d_model=512
 dim_feedforward=1024
@@ -52,6 +53,7 @@ ori_sequence_idx=[162,127,234,93,132,58,172,136,150,149,176,148,152,377,400,378,
     61,185,40,39,37,0,267,269,270,409,291,375,321,405,314,17,84,181,91,146,#
     78,191,80,81,82,13,312,311,310,415,308,324,318,402,317,14,87,178,88,95]
 full_face_sequence=[*list(range(0, 4)), *list(range(21, 25)), *list(range(25, 91)), *list(range(4, 21)), *list(range(91, 131))]
+
 class LandmarkDict(dict):
     def __init__(self, idx, x, y):
         self['idx'] = idx
@@ -155,6 +157,7 @@ class Dataset(object):
 
                 T_content[idx, 0, :] = torch.FloatTensor([T_content_landmarks[idx][i][1] for i in range(len(T_content_landmarks[idx]))])  # x
                 T_content[idx, 1, :] = torch.FloatTensor([T_content_landmarks[idx][i][2] for i in range(len(T_content_landmarks[idx]))])  # y
+            
             # 03. get T audio
             try:
                 audio_mel = np.load(join(args.pre_audio_root,vid_name, "audio.npy"))
@@ -178,6 +181,7 @@ class Dataset(object):
             #  return value
             return T_mels,    T_pose,   T_content,Nl_pose,Nl_content
             #     (T,1,hv,wv) (T,2,74)  (T,2,57)
+
 def load_checkpoint(path, model, optimizer, reset_optimizer=False, overwrite_global_states=True):
     global global_step
     global global_epoch
@@ -199,7 +203,6 @@ def load_checkpoint(path, model, optimizer, reset_optimizer=False, overwrite_glo
         global_step = checkpoint["global_step"]
         global_epoch = checkpoint["global_epoch"]
     return model
-
 
 def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch, prefix=''):
     checkpoint_path = join(
@@ -261,12 +264,15 @@ def evaluate(model, val_data_loader):
     print('eval_L1_loss', eval_L1_loss / count, 'global_step:', global_step)
     writer.add_scalar('eval_velocity_loss', eval_velocity_loss / count, global_step)
     print('eval_velocity_loss', eval_velocity_loss / count, 'global_step:', global_step)
+
 if __name__ == '__main__':
     if not os.path.exists(checkpoint_dir):
         os.makedirs(checkpoint_dir, exist_ok=True)
     device = torch.device("cuda")
+
     # create a model and optimizer
     model = Landmark_transformer(T,d_model,nlayers,nhead,dim_feedforward,dropout)
+    
     if finetune_path is not None:  ###fine tune
         model_dict = model.state_dict()
         print('load module....from :', finetune_path)
@@ -278,12 +284,16 @@ if __name__ == '__main__':
         state_dict_needed = {k: v for k, v in new_s.items() if k in model_dict.keys()}  # we need in model
         model_dict.update(state_dict_needed)
         model.load_state_dict(model_dict)
+    
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+ 
     if torch.cuda.device_count() > 1:
         model = torch.nn.DataParallel(model)
+ 
     model = model.cuda()
     train_dataset = Dataset('train')
     val_dataset = Dataset('test')
+    
     train_data_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=batch_size,
@@ -292,6 +302,7 @@ if __name__ == '__main__':
         num_workers=num_workers,
         pin_memory=True
     )
+    
     val_data_loader = torch.utils.data.DataLoader(
         val_dataset,
         batch_size=batch_size_val,
@@ -300,6 +311,7 @@ if __name__ == '__main__':
         num_workers=num_workers,
         pin_memory=True
     )
+    
     while global_epoch < 9999999999:
         prog_bar = tqdm(enumerate(train_data_loader), total=len(train_data_loader))
         running_L1_loss,running_velocity_loss=0.,0.

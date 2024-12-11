@@ -16,11 +16,13 @@ from models import define_D
 from loss import GANLoss
 from models import Renderer  
 import argparse
+
 parser=argparse.ArgumentParser()
 parser.add_argument('--sketch_root',required=True,help='root path for sketches')
 parser.add_argument('--face_img_root',required=True,help='root path for face frame images')
 parser.add_argument('--audio_root',required=True,help='root path for audio mel')
 args=parser.parse_args()
+
 #other parameters
 num_workers = 20
 Project_name = 'renderer_T1_ref_N3'   #Project_name
@@ -187,10 +189,12 @@ num_D = 2
 disc = define_D(input_nc=3, ndf=64, n_layers_D=n_layers_D, norm='instance', use_sigmoid=False, num_D=num_D,
                     getIntermFeat=True)
 criterionGAN = GANLoss(use_lsgan=True, tensor=torch.cuda.FloatTensor)
+
 # criterion_L1 = nn.L1Loss()
 #evaluate index
 fid_metric = FID()
 feature_extractor = InceptionV3() #.cuda()
+
 def compute_generation_quality(gt, fake_image):  # (B*T,3,96,96)   (B*T,3,96,96) cuda
     global global_step
     psnr_values = []
@@ -293,10 +297,13 @@ def evaluate(model, val_data_loader):
     writer.add_scalar('eval_warp_loss', eval_warp_loss / count, global_step)
     writer.add_scalar('eval_gen_loss', eval_gen_loss / count, global_step)
     print('eval_warp_loss :', eval_warp_loss / count,'eval_gen_loss', eval_gen_loss / count,'global_step:', global_step)
+
+
 if __name__ == '__main__':
     if not os.path.exists(checkpoint_dir):
         os.makedirs(checkpoint_dir, exist_ok=True)
     device = torch.device("cuda")
+
     # create a model and optimizer
     model = Renderer().cuda()
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -308,6 +315,7 @@ if __name__ == '__main__':
         disc = nn.DataParallel(disc)
     disc = disc.cuda()
     disc_optimizer = torch.optim.Adam([p for p in disc.parameters() if p.requires_grad],lr=1e-4, betas=(0.5, 0.999))
+    
     # create dataset
     train_dataset = Dataset('train')
     val_dataset = Dataset('test')
